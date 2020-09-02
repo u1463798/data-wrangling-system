@@ -1,0 +1,19 @@
+SELECT PLOT(bar, AVG(f1.Speed_in_MPH), m="Hourly Avg Speeds", h, Ynames = (
+    "00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00",
+    "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"))
+FROM file1.csv as f1,
+     file2.csv as f2,
+     file3.json as f3
+TO   example_2_results.pdf
+WHERE f1.Direction_Name = 'North' AND
+      DAYOFWEEK(DATE(f1.Date)) = '6' AND
+      f1.Site_ID = f2.StartSite_ID AND
+      f2.W = 'wet'
+WRANGLE BY TRANSFORM(f3, json, csv),
+           ENRICH_TIMESTAMP(f1.Date, '%d/%c/%Y %H', "01/02/2018"),
+           ENRICH_TIMESTAMP(f3.period, '%d/%c/%Y %H'),
+           (f1 JOIN f3 ON (f1.Latitude ~ f3.lat AND
+                           f1.Longitude ~ f3.lon AND
+                           DATE(f1.Date) = DATE(f3.period) AND
+                           TIME(f1.Date) ~ TIME(f3.period))) as f4
+GROUP BY TIME(f1.Date);
